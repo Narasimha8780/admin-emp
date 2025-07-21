@@ -62,7 +62,7 @@
 import axios from 'axios'
 
 export default {
-  name: 'Login',
+  name: 'LoginView',
   data() {
     return {
       credentials: {
