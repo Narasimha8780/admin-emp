@@ -1,24 +1,30 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h2>Employee Login</h2>
-      <form @submit.prevent="handleLogin" class="login-form">
+  <div class="signup-container">
+    <div class="signup-card">
+      <h2>Employee Signup</h2>
+      <form @submit.prevent="handleSignup" class="signup-form">
         <div class="form-group">
-          <label for="username">Email</label>
-          <input id="username" v-model="username" type="email" required placeholder="Enter email" />
+          <label for="firstName">First Name</label>
+          <input id="firstName" v-model="firstName" type="text" required placeholder="Enter first name" />
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input id="lastName" v-model="lastName" type="text" required placeholder="Enter last name" />
+        </div>
+        <div class="form-group">
+          <label for="email">Email ID</label>
+          <input id="email" v-model="email" type="email" required placeholder="Enter email" />
         </div>
         <div class="form-group">
           <label for="password">Password</label>
           <input id="password" v-model="password" type="password" required placeholder="Enter password" />
         </div>
         <button type="submit" :disabled="loading" class="btn btn-primary">
-          {{ loading ? 'Logging in...' : 'Login' }}
+          {{ loading ? 'Signing up...' : 'Sign Up' }}
         </button>
         <div v-if="error" class="error-message">{{ error }}</div>
+        <div v-if="success" class="success-message">{{ success }}</div>
       </form>
-      <p class="signup-link">
-        Don't have an account? <router-link to="/signup">Sign up here</router-link>
-      </p>
     </div>
   </div>
 </template>
@@ -27,37 +33,45 @@
 import axios from 'axios'
 
 export default {
-  name: 'EmployeeLogin',
+  name: 'EmployeeSignup',
   data() {
     return {
-      username: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       password: '',
       loading: false,
-      error: ''
+      error: '',
+      success: ''
     }
   },
   methods: {
-    async handleLogin() {
+    async handleSignup() {
       this.error = ''
-      if (!this.username || !this.password) {
+      this.success = ''
+      if (!this.firstName || !this.lastName || !this.email || !this.password) {
         this.error = 'Please fill in all fields'
         return
       }
       this.loading = true
       try {
-        const response = await axios.post('http://localhost:3000/api/login', {
-          username: this.username,
-          password: this.password,
-          role: 'employee'
+        const response = await axios.post('http://localhost:3000/api/signup', {
+          firstName: this.firstName,
+          lastName: this.lastName,
+          email: this.email,
+          password: this.password
         })
         if (response.data.success) {
-          localStorage.setItem('user', JSON.stringify(response.data.user))
-          this.$router.push('/dashboard')
+          this.success = 'Signup successful! You can now login.'
+          this.firstName = ''
+          this.lastName = ''
+          this.email = ''
+          this.password = ''
         } else {
-          this.error = 'Invalid credentials'
+          this.error = response.data.error || 'Signup failed'
         }
       } catch (err) {
-        this.error = err.response?.data?.error || 'Login failed'
+        this.error = err.response?.data?.error || 'Signup failed'
       } finally {
         this.loading = false
       }
@@ -67,7 +81,7 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
+.signup-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -75,7 +89,7 @@ export default {
   background: #f5f7fa;
 }
 
-.login-card {
+.signup-card {
   background: white;
   padding: 40px;
   border-radius: 10px;
@@ -86,7 +100,6 @@ export default {
 
 h2 {
   margin-bottom: 20px;
-  color: #2d3748;
   font-weight: 600;
   text-align: center;
 }
@@ -140,6 +153,13 @@ input:focus {
 .error-message {
   margin-top: 15px;
   color: #e53e3e;
+  font-weight: 600;
+  text-align: center;
+}
+
+.success-message {
+  margin-top: 15px;
+  color: #38a169;
   font-weight: 600;
   text-align: center;
 }
