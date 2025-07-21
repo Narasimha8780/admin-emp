@@ -22,7 +22,14 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // MongoDB Connection
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/employee_monitoring';
+require('dotenv').config();
+
+const mongoURI = process.env.MONGO_URI;
+if (!mongoURI) {
+  console.error('MONGO_URI is not defined in .env file');
+  process.exit(1);
+}
+
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -117,6 +124,44 @@ app.post('/api/login', async (req, res) => {
       } 
     });
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Signup route
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Determine role based on email domain or pattern
+    let role = 'employee';
+    if (email.endsWith('@tlcompany.com')) {
+      role = 'tl';
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ username: email });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+
+    // Create new user
+    const newUser = new User({
+      username: email,
+      password,
+      role,
+      firstName,
+      lastName
+    });
+
+    await newUser.save();
+
+    res.json({ success: true, message: 'User registered successfully', user: { id: newUser._id, username: newUser.username, role: newUser.role } });
+  } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
